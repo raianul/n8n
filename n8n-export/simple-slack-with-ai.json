@@ -1,0 +1,132 @@
+{
+  "name": "simple-slack-with-ai",
+  "nodes": [
+    {
+      "parameters": {
+        "trigger": [
+          "any_event"
+        ],
+        "channelId": {
+          "__rl": true,
+          "value": "C0AH8E77YS1",
+          "mode": "list",
+          "cachedResultName": "social"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.slackTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "bc14183b-8ec7-4f26-8d34-762afb9dbb05",
+      "name": "Slack Trigger",
+      "webhookId": "4aade804-c384-46f2-b3f5-663a2f381641",
+      "credentials": {
+        "slackApi": {
+          "id": "zmseRWsGFNgXKDXi",
+          "name": "xRAyon"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "C0AH8E77YS1",
+          "mode": "list",
+          "cachedResultName": "social"
+        },
+        "text": "={{ $json.content }}",
+        "otherOptions": {}
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.4,
+      "position": [
+        544,
+        0
+      ],
+      "id": "1b0888d3-be49-4e21-b073-095282364861",
+      "name": "Send a message",
+      "webhookId": "8a238be8-a063-4640-b7b2-f0353e93cc7d",
+      "credentials": {
+        "slackApi": {
+          "id": "zmseRWsGFNgXKDXi",
+          "name": "xRAyon"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "kimi-k2.5:cloud",
+          "mode": "list",
+          "cachedResultName": "kimi-k2.5:cloud"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "={{ $json.blocks[0].elements[0].elements[1].text }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.ollama",
+      "typeVersion": 1,
+      "position": [
+        208,
+        0
+      ],
+      "id": "6a30a05c-59e7-4767-bfe3-c9faa549b195",
+      "name": "Message a model",
+      "credentials": {
+        "ollamaApi": {
+          "id": "e2I7WNkJxGrX2A4w",
+          "name": "Ollama account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Slack Trigger": {
+      "main": [
+        [
+          {
+            "node": "Message a model",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "6ff44b2b-b83f-40e4-8628-ae79d16c6fea",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "4c406ff7f2651759f31731807256c4a83baa34208515e36a4f53a79cebb303fb"
+  },
+  "id": "juUzydG4semHINe9",
+  "tags": []
+}

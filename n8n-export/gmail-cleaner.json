@@ -1,0 +1,124 @@
+{
+  "name": "Gmail",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "78190586-a16a-4c9b-94c3-21bfdf6ad231",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "filters": {
+          "q": "from: info@members.netflix.com"
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        208,
+        0
+      ],
+      "id": "4c8871f4-6a3a-4502-a30f-16c4a8c11b6a",
+      "name": "Get many messages",
+      "webhookId": "bbc8ba7f-47ea-40d9-8220-aaf9d0dfda2d",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "TnIUI46wWVxmI96L",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "batchSize": 25,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        416,
+        0
+      ],
+      "id": "fd37a705-d9e6-48a2-b938-2565dca2ed4b",
+      "name": "Loop Over Items"
+    },
+    {
+      "parameters": {
+        "operation": "delete",
+        "messageId": "={{ $json.id }}"
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        624,
+        96
+      ],
+      "id": "eda902d7-0818-40c1-b6ef-6e6d89cc0f3c",
+      "name": "Delete a message",
+      "webhookId": "69650a98-8c01-437b-867b-04daa4e84559",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "TnIUI46wWVxmI96L",
+          "name": "Gmail account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Get many messages",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get many messages": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Delete a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "19f717c1-58bf-427e-b39f-55d77940afcd",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "4c406ff7f2651759f31731807256c4a83baa34208515e36a4f53a79cebb303fb"
+  },
+  "id": "LSRTVKkFAFQlQ791",
+  "tags": []
+}
