@@ -1,0 +1,264 @@
+{
+  "name": "gmail_access_token_webhook",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "gmail-callback",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -240,
+        -32
+      ],
+      "id": "dcefbdae-579d-4d76-bb21-0ab3a92aa48f",
+      "name": "Webhook",
+      "webhookId": "3c4817f7-63a4-469f-9cf7-17d7d1e7a66a"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://oauth2.googleapis.com/token",
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "code",
+              "value": "={{ $json.query.code }}"
+            },
+            {
+              "name": "client_id",
+              "value": "YOUR_GOOGLE_OAUTH2_CLIENT_ID"
+            },
+            {
+              "name": "client_secret",
+              "value": "YOUR_GOOGLE_OAUTH2_CLIENT_SECRET"
+            },
+            {
+              "name": "redirect_uri",
+              "value": "https://YOUR_N8N_HOST/webhook/gmail-callback"
+            },
+            {
+              "name": "grant_type",
+              "value": "authorization_code"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -32,
+        -32
+      ],
+      "id": "5727bf6e-32ce-48bc-94ae-3a23dc2e3bd3",
+      "name": "http_get_token"
+    },
+    {
+      "parameters": {
+        "url": "https://www.googleapis.com/oauth2/v2/userinfo",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $('http_get_token').item.json.access_token }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        176,
+        -32
+      ],
+      "id": "6039df46-ad7e-4b93-a27c-ca407eb05626",
+      "name": "http_get_user_info"
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Webhook').item.json.query.state }}",
+        "text": "✅ Gmail connected successfully!\n\n📧 Now enter the sender's email address you want to delete:",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        816,
+        -32
+      ],
+      "id": "c4e6a8d7-bed1-414b-9264-fcab79d0125f",
+      "name": "tele_ask_sender_email",
+      "webhookId": "631ceae4-e52d-403c-a71b-3a056437d3b0",
+      "credentials": {
+        "telegramApi": {
+          "id": "YOUR_TELEGRAM_CREDENTIAL_ID",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "table": {
+          "__rl": true,
+          "value": "users",
+          "mode": "list",
+          "cachedResultName": "users"
+        },
+        "dataMode": "defineBelow",
+        "valuesToSend": {
+          "values": [
+            {
+              "column": "chat_id",
+              "value": "={{ $('Webhook').item.json.query.state }}"
+            },
+            {
+              "column": "gmail",
+              "value": "={{ $json.email }}"
+            },
+            {
+              "column": "refresh_token",
+              "value": "={{ $('http_get_token').item.json.refresh_token }}"
+            },
+            {
+              "column": "access_token",
+              "value": "={{ $('http_get_token').item.json.access_token }}"
+            },
+            {
+              "column": "token_expiry",
+              "value": "={{ $('http_get_token').item.json.expires_in }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.mySql",
+      "typeVersion": 2.5,
+      "position": [
+        368,
+        -32
+      ],
+      "id": "5f09d31e-d006-43cf-b2e2-3f619b450014",
+      "name": "add_access_token",
+      "credentials": {
+        "mySql": {
+          "id": "YOUR_MYSQL_CREDENTIAL_ID",
+          "name": "MySQL account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "upsert",
+        "table": {
+          "__rl": true,
+          "value": "sessions",
+          "mode": "list",
+          "cachedResultName": "sessions"
+        },
+        "dataMode": "defineBelow",
+        "columnToMatchOn": "chat_id",
+        "valueToMatchOn": "={{ $('Webhook').item.json.query.state }}",
+        "valuesToSend": {
+          "values": [
+            {
+              "column": "state",
+              "value": "awaiting_sender_email"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.mySql",
+      "typeVersion": 2.5,
+      "position": [
+        576,
+        -32
+      ],
+      "id": "a5239b4b-7763-4086-abe7-dac06106bdba",
+      "name": "update_user_session",
+      "credentials": {
+        "mySql": {
+          "id": "YOUR_MYSQL_CREDENTIAL_ID",
+          "name": "MySQL account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "http_get_token",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "http_get_token": {
+      "main": [
+        [
+          {
+            "node": "http_get_user_info",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "http_get_user_info": {
+      "main": [
+        [
+          {
+            "node": "add_access_token",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "add_access_token": {
+      "main": [
+        [
+          {
+            "node": "update_user_session",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "update_user_session": {
+      "main": [
+        [
+          {
+            "node": "tele_ask_sender_email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "7ab92589-1650-4813-9f0d-c29ade28dad1",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "f4c912bce6ce2cd51e6650a14a936bb611d5deb32d7339b52c7d0a1d971e21f3"
+  },
+  "id": "DGHDjz8ZadXsrJpK",
+  "tags": []
+}
